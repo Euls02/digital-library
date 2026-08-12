@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athenaeum — Institutional Library System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ======================= LOGIN SCREEN ======================= -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="brandmark">
+      <div class="eyebrow">Institutional Access</div>
+      <h1>Athenaeum</h1>
+    </div>
+
+    <div class="library-card">
+      <div class="card-title-row">
+        <h2 id="loginStepTitle">Sign in with institution ID</h2>
+        <span id="loginStepTag">STEP 1 / 2</span>
+      </div>
+
+      <div class="error-msg" id="loginError"></div>
+
+      <!-- Step 1: credentials -->
+      <div id="stepCreds">
+        <div class="field">
+          <label for="idInput">Student / Faculty / Staff Number</label>
+          <input id="idInput" type="text" placeholder="e.g. 20481" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="pwInput">Password</label>
+          <div class="field-input-row">
+            <input id="pwInput" type="password" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="toggle-vis" id="toggleVis">SHOW</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="roleSelect">Sign in as</label>
+          <select id="roleSelect">
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="librarian">Librarian / Admin</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="continueBtn">Continue</button>
+        <div class="login-meta">
+          <span>3 institutions linked via SSO</span>
+          <span class="lock-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+            TLS 1.3
+          </span>
+        </div>
+      </div>
+
+      <!-- Step 2: MFA -->
+      <div id="stepMfa" style="display:none;">
+        <p style="font-size:12.5px; color:var(--ink-soft); margin-top:-6px;">
+          Enter the 6-digit verification code sent to your registered device. This confirms it's really you.
+        </p>
+        <div class="field">
+          <label>Verification code</label>
+          <div class="mfa-boxes">
+            <input maxlength="1" class="mfa-box">
+            <input maxlength="1" class="mfa-box">
+            <input maxlength="1" class="mfa-box">
+            <input maxlength="1" class="mfa-box">
+            <input maxlength="1" class="mfa-box">
+            <input maxlength="1" class="mfa-box">
+          </div>
+        </div>
+        <button class="btn-primary" id="verifyBtn">Verify &amp; sign in</button>
+        <div class="login-meta">
+          <button type="button" id="backBtn" style="background:none;border:none;color:var(--ink-soft);text-decoration:underline;font-size:11.5px;padding:0;">← Back</button>
+          <span class="lock-badge">Code: <b class="mono">000000</b> (demo)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="role-hint" id="loginBottomHint">Sign in with the number and password you registered. Use the code shown above at the MFA step.</div>
+    <div class="signup-cta">New to Athenaeum? <button type="button" id="goToSignup">Create an account</button></div>
+  </div>
+</div>
+
+<!-- ======================= SIGN-UP SCREEN ======================= -->
+<div id="signupScreen" style="display:none;">
+  <div class="login-wrap signup-wrap">
+    <div class="brandmark">
+      <div class="eyebrow">Institutional Registration</div>
+      <h1>Athenaeum</h1>
+    </div>
+
+    <div class="library-card">
+      <div class="card-title-row">
+        <h2 id="signupStepTitle">Choose your account type</h2>
+        <span id="signupStepTag">STEP 1 / 4</span>
+      </div>
+
+      <!-- progress rail -->
+      <div class="progress-rail">
+        <div class="progress-step active" data-step="1"><span>1</span>Role</div>
+        <div class="progress-step" data-step="2"><span>2</span>Details</div>
+        <div class="progress-step" data-step="3"><span>3</span>Security</div>
+        <div class="progress-step" data-step="4"><span>4</span>Review</div>
+      </div>
+
+      <div class="error-msg" id="signupError"></div>
+
+      <!-- Step 1: role choice -->
+      <div class="signup-step" id="suStep1">
+        <p class="step-intro">Your account type determines what the library lets you do — borrowing limits, reserve access, and administrative tools.</p>
+        <div class="role-cards">
+          <button type="button" class="role-card" data-role="student">
+            <span class="role-card-icon">📖</span>
+            <span class="role-card-title">Student</span>
+            <span class="role-card-desc">Borrow items, build a reading trail, access course reserves.</span>
+          </button>
+          <button type="button" class="role-card" data-role="faculty">
+            <span class="role-card-icon">🎓</span>
+            <span class="role-card-title">Faculty</span>
+            <span class="role-card-desc">Everything a student can do, plus manage course reading lists.</span>
+          </button>
+          <button type="button" class="role-card" data-role="librarian">
+            <span class="role-card-icon">🗝️</span>
+            <span class="role-card-title">Librarian / Admin</span>
+            <span class="role-card-desc">Catalog management and audit tools. Requires staff approval.</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: role-specific details -->
+      <div class="signup-step" id="suStep2" style="display:none;">
+        <div class="field">
+          <label for="suFullName">Full legal name</label>
+          <input id="suFullName" type="text" placeholder="e.g. Jordan A. Reyes" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="suEmail">Institutional email</label>
+          <input id="suEmail" type="email" placeholder="e.g. jreyes@institution.edu" autocomplete="email">
+        </div>
+
+        <!-- Student-only fields -->
+        <div class="role-fields" id="fieldsStudent">
+          <div class="field-row">
+            <div class="field">
+              <label for="suStudentId">Student ID number</label>
+              <input id="suStudentId" type="text" placeholder="e.g. 20481">
+            </div>
+            <div class="field">
+              <label for="suYear">Year level</label>
+              <select id="suYear">
+                <option>1st Year</option><option>2nd Year</option><option>3rd Year</option>
+                <option>4th Year</option><option>Graduate</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="suProgram">Program / Major</label>
+            <input id="suProgram" type="text" placeholder="e.g. B.Sc. Computer Science">
+          </div>
+        </div>
+
+        <!-- Faculty-only fields -->
+        <div class="role-fields" id="fieldsFaculty" style="display:none;">
+          <div class="field-row">
+            <div class="field">
+              <label for="suFacultyId">Faculty ID number</label>
+              <input id="suFacultyId" type="text" placeholder="e.g. 1092">
+            </div>
+            <div class="field">
+              <label for="suTitle">Academic title</label>
+              <select id="suTitle">
+                <option>Lecturer</option><option>Assistant Professor</option>
+                <option>Associate Professor</option><option>Professor</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="suDeptFaculty">Department</label>
+            <input id="suDeptFaculty" type="text" placeholder="e.g. Department of Physics">
+          </div>
+        </div>
+
+        <!-- Librarian/Admin-only fields -->
+        <div class="role-fields" id="fieldsLibrarian" style="display:none;">
+          <div class="field-row">
+            <div class="field">
+              <label for="suStaffId">Staff ID number</label>
+              <input id="suStaffId" type="text" placeholder="e.g. 0044">
+            </div>
+            <div class="field">
+              <label for="suDeptLib">Unit</label>
+              <input id="suDeptLib" type="text" placeholder="e.g. Library Services">
+            </div>
+          </div>
+          <div class="field">
+            <label for="suApprovalCode">Institutional approval code</label>
+            <input id="suApprovalCode" type="text" placeholder="Provided by your library director">
+          </div>
+          <p class="field-note">Admin accounts require a staff approval code and are reviewed before activation — this protects catalog and audit-log access.</p>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" class="btn-secondary" id="suBack1">← Back</button>
+          <button type="button" class="btn-primary" id="suNext2">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: security -->
+      <div class="signup-step" id="suStep3" style="display:none;">
+        <div class="field">
+          <label for="suPassword">Create password</label>
+          <div class="field-input-row">
+            <input id="suPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password">
+            <button type="button" class="toggle-vis" id="suToggleVis">SHOW</button>
+          </div>
+          <div class="strength-meter"><div class="strength-fill" id="strengthFill"></div></div>
+          <div class="strength-label" id="strengthLabel">Enter a password</div>
+        </div>
+        <div class="field">
+          <label for="suPasswordConfirm">Confirm password</label>
+          <input id="suPasswordConfirm" type="password" placeholder="Re-enter your password" autocomplete="new-password">
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="suTerms">
+          <span>I agree to the library's <a href="#" onclick="return false;">acceptable use policy</a> and confirm the information provided is accurate.</span>
+        </label>
+        <div class="step-actions">
+          <button type="button" class="btn-secondary" id="suBack2">← Back</button>
+          <button type="button" class="btn-primary" id="suNext3">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 4: review -->
+      <div class="signup-step" id="suStep4" style="display:none;">
+        <p class="step-intro">Review your details before submitting. You can still edit any section.</p>
+        <div class="review-grid" id="reviewGrid"></div>
+        <div class="step-actions">
+          <button type="button" class="btn-secondary" id="suBack3">← Back</button>
+          <button type="button" class="btn-primary" id="suSubmit">Create account</button>
+        </div>
+      </div>
+
+      <!-- Step 5: confirmation -->
+      <div class="signup-step" id="suStep5" style="display:none;">
+        <div class="confirm-box">
+          <div class="confirm-icon" id="confirmIcon">✓</div>
+          <h3 id="confirmTitle">Account created</h3>
+          <p id="confirmBody">Your account is ready. You can sign in now.</p>
+          <button type="button" class="btn-primary" id="suGoLogin">Go to sign in</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="role-hint">Already registered? <button type="button" id="goToLogin" style="background:none;border:none;color:var(--paper);text-decoration:underline;font-size:11.5px;cursor:pointer;padding:0;">Sign in instead</button></div>
+  </div>
+</div>
+
+<!-- ======================= APP SHELL ======================= -->
+<div id="appShell">
+  <div class="topbar">
+    <div class="wordmark">Athenaeum<small>Institutional Library</small></div>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Search title, author, or call number…">
+    </div>
+    <div class="topbar-right">
+      <div class="session-chip"><span class="dot"></span><span id="sessionTimer">Session 29:58</span></div>
+      <div class="user-chip">
+        <div class="avatar" id="userAvatar">ST</div>
+        <div>
+          <div id="userName" style="font-weight:600;">—</div>
+          <div class="role" id="userRole">—</div>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ======================= DIGITAL READER ======================= -->
+<div class="reader" id="readerView">
+  <div class="reader-topbar">
+    <button class="reader-close" id="readerClose" aria-label="Close reader">&times; Close</button>
+    <div class="reader-book-info">
+      <div class="reader-book-title" id="readerTitle">Title</div>
+      <div class="reader-book-author" id="readerAuthor">Author</div>
+    </div>
+    <div class="reader-progress-wrap">
+      <div class="reader-progress-track"><div class="reader-progress-fill" id="readerProgressFill"></div></div>
+      <span class="reader-progress-pct mono" id="readerProgressPct">0%</span>
+    </div>
+  </div>
+
+  <div class="reader-toolbar">
+    <div class="reader-toolbar-group">
+      <span class="reader-toolbar-label">Text size</span>
+      <button class="reader-btn" id="fontDown" aria-label="Decrease text size">A−</button>
+      <button class="reader-btn" id="fontUp" aria-label="Increase text size">A+</button>
+    </div>
+    <div class="reader-toolbar-group">
+      <span class="reader-toolbar-label">Theme</span>
+      <button class="reader-theme-btn theme-paper active" data-theme="paper" title="Paper" aria-label="Paper theme"></button>
+      <button class="reader-theme-btn theme-sepia" data-theme="sepia" title="Sepia" aria-label="Sepia theme"></button>
+      <button class="reader-theme-btn theme-dark" data-theme="dark" title="Night" aria-label="Night theme"></button>
+    </div>
+    <div class="reader-toolbar-group">
+      <button class="reader-btn" id="bookmarkBtn">🔖 Bookmark this page</button>
+    </div>
+  </div>
+
+  <div class="reader-page-wrap" id="readerPageWrap">
+    <div class="reader-page" id="readerPage">
+      <div class="reader-chapter-label" id="readerChapterLabel">Chapter 1</div>
+      <div class="reader-text" id="readerText"></div>
+    </div>
+  </div>
+
+  <div class="reader-footer">
+    <button class="reader-nav-btn" id="prevPageBtn">← Previous</button>
+    <span class="reader-page-indicator mono" id="readerPageIndicator">Page 1 of 1</span>
+    <button class="reader-nav-btn" id="nextPageBtn">Next →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
